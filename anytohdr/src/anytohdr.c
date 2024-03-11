@@ -8,7 +8,7 @@ u32 any_to_hdr(anytohdr_t *ath) {
 
   FILE *fp_in, *fp_out;
 
-  fp_in = fopen(ath->in_file, "rb");
+  fopen_s(&fp_in, ath->in_file, "rb");
   ATH_ASSERT_RUN(NULL == fp_in, return ATHS_NOT_EXIST | ATHS_FILE_MASK);
 
   // get total size of the file
@@ -44,7 +44,7 @@ u32 any_to_hdr(anytohdr_t *ath) {
   /**
    * Open out file now and prepare to write.
    */
-  fp_out = fopen(ath->out_file, "w");
+  fopen_s(&fp_out, ath->out_file, "w");
   ATH_ASSERT_RUN(NULL == fp_out, return ATHS_NULL_PTR | ATHS_FILE_MASK);
 
   // assign variable name if not already
