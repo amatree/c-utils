@@ -15,7 +15,7 @@ CFLAGS	:= -Wall -Wextra -g
 LFLAGS =
 
 # define output directory
-OUTPUT	:= output
+OUTPUT	:= bin
 
 # define source directory
 SRC		:= src
@@ -25,6 +25,9 @@ INCLUDE	:= include
 
 # define lib directory
 LIB		:= lib
+
+# define lib name
+LIBNAME		:= 
 
 ifeq ($(OS),Windows_NT)
 MAIN	:= main.exe
@@ -47,34 +50,45 @@ endif
 # define any directories containing header files other than /usr/include
 INCLUDES	:= $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
 
-# define the C libs
+# define the C lib directories
 LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
 
-# define the C source files
-SOURCES		:= $(wildcard $(patsubst %,%/*.c, $(SOURCEDIRS)))
+# define the C lib names
+LIBNAMES := $(patsubst %,-l%, $(LIBNAME:%/=%))
 
-# define the C object files 
-OBJECTS		:= $(SOURCES:.c=.o)
+# define the C source files
+SOURCES := $(shell powershell -Command "Get-ChildItem -Path '$(SRC)' -Recurse -Filter '*.c' | Select-Object -ExpandProperty FullName | Resolve-Path -Relative")
+SOURCES := src/main.c $(subst src/main.c,,$(subst \,/,$(subst .\,,$(SOURCES))))
+
+# subdirectories in src for mkdir
+SOURCESUBDIRS := $(subst \,/,$(subst .\,,${shell powershell -Command "Get-ChildItem '$(SRC)' -Directory -Recurse | Select-Object -ExpandProperty FullName | Resolve-Path -Relative"}))
+
+# define the C object files 	
+OBJECTS := $(patsubst $(SRC)/%.c,$(OUTPUT)/$(SRC)/%.o,$(SOURCES))
 
 # define the dependency output files
-DEPS		:= $(OBJECTS:.o=.d)
+DEPS := $(patsubst $(SRC)/%.c,$(OUTPUT)/$(SRC)/%.d,$(SOURCES))
 
 #
 # The following part of the makefile is generic; it can be used to 
 # build any executable just by changing the definitions above and by
 # deleting dependencies appended to the file from 'make depend'
 #
-
 OUTPUTMAIN	:= $(call FIXPATH,$(OUTPUT)/$(MAIN))
 
 all: $(OUTPUT) $(MAIN)
 	@echo Executing 'all' complete!
 
+.PHONY: $(OUTPUT)
 $(OUTPUT):
-	$(MD) $(OUTPUT)
+	@echo $(SOURCESUBDIRS)
+	if exist $(OUTPUT) $(RM) $(OUTPUT)
+	if not exist $(OUTPUT) $(MD) $(OUTPUT)
+	if not exist $(OUTPUT)\$(SRC) $(MD) $(OUTPUT)\$(SRC)
+	for %%c in ($(SOURCESUBDIRS)) do (if not exist "$(OUTPUT)\%%c" $(MD) "$(OUTPUT)\%%c")
 
 $(MAIN): $(OBJECTS) 
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS) $(LIBNAMES)
 
 # include all .d files
 -include $(DEPS)
@@ -84,8 +98,8 @@ $(MAIN): $(OBJECTS)
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
 # -MMD generates dependency output files same name as the .o file
 # (see the gnu make manual section about automatic variables)
-.c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c -MMD $<  -o $@
+$(OUTPUT)/$(SRC)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c -MMD $< -o $@
 
 .PHONY: clean
 clean:

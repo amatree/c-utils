@@ -21,10 +21,10 @@ u32 any_to_hdr(anytohdr_t *ath) {
   // copy read in file data to buffer
   char *buffer = malloc(fsize + 1);
   ATH_ASSERT_RUN(NULL == buffer, return ATHS_FAILURE);
-  ATH_ASSERT_RUN(NULL != ath->buffer, {
-    free(ath->buffer);
-    return ATHS_FAILURE;
-  });
+  // ATH_ASSERT_RUN(NULL != ath->buffer, {
+  //   free(ath->buffer);
+  //   return ATHS_FAILURE;
+  // });
   ath->buffer = buffer;
   fread(buffer, fsize, 1, fp_in);
   fclose(fp_in);
@@ -55,6 +55,5 @@ u32 any_to_hdr(anytohdr_t *ath) {
     memcpy(&ath->var_name[cnt], &"_data", 6);
   });
   
-
   return ATHS_SUCCESS;
 }

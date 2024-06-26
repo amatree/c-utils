@@ -1,7 +1,0 @@
-{
-  "files.associations": {
-    "anytohdr.h": "c",
-    "stdio.h": "c",
-    "file.h": "c"
-  }
-}
